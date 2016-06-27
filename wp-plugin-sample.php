@@ -46,6 +46,10 @@ class WP_Plugin_Sample{
             self::$instance = $this;
             
             add_action( 'admin_menu', array( $this, 'add_menu'));
+            
+            add_action('admin_enqueue_scripts', array($this, 'admin_enqueue_scripts') );
+            
+            add_action( 'wp_ajax_wp_sample_plugin_email_search', array( $this, 'ajax_wp_sample_plugin_email_search' ) );
         }
     }
     
@@ -64,6 +68,27 @@ class WP_Plugin_Sample{
     function simple_form(){
         include_once( 'templates/simple-form.php' );
     }
+    
+    function admin_enqueue_scripts($hook) {
+        //Custom JS for refunds
+        if( "toplevel_page_wp-plugin-sample" == $hook ){
+            wp_enqueue_script('wp-plugin-sample-email-search', plugins_url("js/ajax-email-search.js", __FILE__), array('jquery'), '20160627');
+        }
+    }
+    
+    function ajax_wp_sample_plugin_email_search(){
+        $email = filter_input(INPUT_POST, 'email');
+        $user = WP_User::get_data_by('email', $email);
+        if (!is_null($user->ID)){
+            $response = array(
+                'user_id'   =>  $user->ID
+            );
+            wp_send_json($response);
+        }
+        echo "{}";
+        die();
+    }
+    
 }
 
 $oWpPluginSample = WP_Plugin_Sample::getInstance();
